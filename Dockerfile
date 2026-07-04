@@ -28,6 +28,8 @@ RUN pnpm prune --prod
 # CREATE_IMAGE_04: Create a "production_deployment" image with the app ready to run
 FROM node:20-alpine3.21 AS production_deployment
 
+USER 1000
+
 WORKDIR /usr/src/app
 
 COPY --from=build /usr/src/app/dist ./dist
