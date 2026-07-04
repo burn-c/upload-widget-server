@@ -26,7 +26,7 @@ RUN pnpm build
 RUN pnpm prune --prod
 
 # CREATE_IMAGE_04: Create a "production_deployment" image with the app ready to run
-FROM node:20-alpine3.21 AS production_deployment
+FROM cgr.dev/chainguard/node:latest AS production_deployment
 
 USER 1000
 
@@ -44,4 +44,4 @@ ENV CLOUDFLARE_PUBLIC_URL="http://localhost"
 
 EXPOSE 3333
 
-CMD ["node", "dist/server.mjs"]
+CMD ["dist/server.mjs"]
