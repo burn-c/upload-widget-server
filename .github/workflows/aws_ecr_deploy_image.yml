@@ -38,7 +38,7 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{steps.login-ecr.outputs.registry}}/${{ vars.ECR_REPOSITORY }}:${{ steps.generate-tag.outputs.sha }}
+            ${{steps.login-ecr.outputs.registry}}/${{ vars.ECR_REPOSITORY }}:${{ steps.generate-tag.outputs.sha_image_tag }}
 
       # - name: Build and push image to Amazon ECR
       #   id: build-push-image
