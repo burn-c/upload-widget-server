@@ -32,14 +32,22 @@ jobs:
           SHA_IMAGE_TAG=$(echo $GITHUB_SHA | head -c7)
           echo "sha_image_tag=$SHA_IMAGE_TAG" >> $GITHUB_OUTPUT
 
-      - name: Build and push image to Amazon ECR
-        id: build-push-image
-        env:
-          SHA_IMAGE_TAG: ${{ steps.generate-tag.outputs.sha_image_tag }}
-          ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
-          ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
-        run: |
-          PUSH_IMAGE_URL="${ECR_REGISTRY}/${ECR_REPOSITORY}:${SHA_IMAGE_TAG}"
-          echo "Building image with tag: $PUSH_IMAGE_URL"
-          docker build -t "$PUSH_IMAGE_URL" .
-          docker push "$PUSH_IMAGE_URL"
+      - name: Build and push the image to AWS ECR with docker/build-push-action@v6
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{steps.login-ecr.outputs.registry}}/${{ vars.ECR_REPOSITORY }}:${{ steps.generate-tag.outputs.sha }}
+
+      # - name: Build and push image to Amazon ECR
+      #   id: build-push-image
+      #   env:
+      #     SHA_IMAGE_TAG: ${{ steps.generate-tag.outputs.sha_image_tag }}
+      #     ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
+      #     ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+      #   run: |
+      #     PUSH_IMAGE_URL="${ECR_REGISTRY}/${ECR_REPOSITORY}:${SHA_IMAGE_TAG}"
+      #     echo "Building image with tag: $PUSH_IMAGE_URL"
+      #     docker build -t "$PUSH_IMAGE_URL" .
+      #     docker push "$PUSH_IMAGE_URL"
