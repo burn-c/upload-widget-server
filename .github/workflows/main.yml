@@ -37,7 +37,8 @@ jobs:
           SHA_IMAGE_TAG: ${{ steps.generate-tag.outputs.sha_image_tag }}
           ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
           ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
-          URL_PUSH: "$ECR_REGISTRY/$ECR_REPOSITORY:$SHA_IMAGE_TAG"
-        run: | 
-          docker build -t $URL_PUSH .
-          docker push $URL_PUSH
+        run: |
+          PUSH_IMAGE_URL="${ECR_REGISTRY}/${ECR_REPOSITORY}:${SHA_IMAGE_TAG}"
+          echo "Building image with tag: $PUSH_IMAGE_URL"
+          docker build -t "$PUSH_IMAGE_URL" .
+          docker push "$PUSH_IMAGE_URL"
