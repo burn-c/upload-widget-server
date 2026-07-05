@@ -49,6 +49,24 @@ jobs:
           SHA_IMAGE_TAG=$(echo $GITHUB_SHA | head -c7)
           echo "sha_image_tag=$SHA_IMAGE_TAG" >> $GITHUB_OUTPUT
 
+      - name: Build and push the image to AWS ECR
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: |
+            ${{steps.login-ecr.outputs.registry}}/${{ vars.ECR_REPOSITORY }}:test
+
+      - name: Run Trivy scanner
+        id: run-trivy-scanner
+        uses: aquasecurity/trivy@0.29.0
+        with:
+          image-ref: '${{steps.login-ecr.outputs.registry}}/${{ vars.ECR_REPOSITORY }}:test'
+          format: 'table'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH,MEDIUM,LOW'
+
       - name: Build and push the image to AWS ECR with docker/build-push-action@v6
         uses: docker/build-push-action@v6
         with:
