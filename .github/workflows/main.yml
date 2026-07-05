@@ -24,10 +24,20 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
+      
+      - name: Generate tag
+        id: generate-tag
+        run: |
+          SHA_IMAGE_TAG=$(echo $GITHUB_SHA | head -c7)
+          echo "sha_image_tag=$SHA_IMAGE_TAG" >> $GITHUB_ENV
 
-      - name: Build, tag, and push image to Amazon ECR
+      - name: Build and push image to Amazon ECR
         id: build-push-image
+        env:
+          SHA_IMAGE_TAG: ${{ steps.generate-tag.outputs.sha_image_tag }}
+          ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
+          ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+          URL_PUSH: $ECR_REGISTRY/$ECR_REPOSITORY:$SHA_IMAGE_TAG
         run: | 
-          docker build -t widget-server:v3 .
-          docker tag widget-server:v3 377865781125.dkr.ecr.us-east-1.amazonaws.com/burnc/widget-server:v3
-          docker push 377865781125.dkr.ecr.us-east-1.amazonaws.com/burnc/widget-server:v3
+          docker build -t $URL_PUSH .
+          docker push $URL_PUSH
