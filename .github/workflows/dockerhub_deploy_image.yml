@@ -1,8 +1,9 @@
 name: Deploy widget-server image to Dockerhub
 on:
-  push:
-    branches:
-      - main
+# INFO: Disabled push trigger
+  # push:
+  #   branches:
+  #     - main
   workflow_dispatch:
 
 jobs:
