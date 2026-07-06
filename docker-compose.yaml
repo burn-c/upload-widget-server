@@ -1,4 +1,14 @@
 services:
+  db:
+    image: postgres:15.3-alpine
+    container_name: widget-db
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: widget-server-db
+
   app:
     build: .
     container_name: widget-server
