@@ -63,9 +63,21 @@ docker logs --tail 50 meu-app  # Mostra últimas 50 linhas
 - `docker logs <container>`
   - Exibe os logs de um contêiner.
 - `docker inspect <container>`
-  - Mostra detalhes de configuração e rede do contêiner.
+  - Mostra detalhes de configuração, rede, variáveis de ambiente, volumes e outras propriedades do contêiner.
+- `docker inspect <container> | grep -i "ipaddress\|port\|mount"`
+  - Filtra informações específicas do inspect para facilitar a leitura.
 - `docker exec -it <container> sh`
   - Abre um shell interativo dentro do contêiner.
+
+Exemplo:
+
+```bash
+# Verificar detalhes de um contêiner
+ docker inspect meu-app
+
+# Mostrar apenas informações de rede e portas
+ docker inspect meu-app | grep -i "ipaddress\|port"
+```
 
 ## Rede e volumes
 
@@ -73,6 +85,77 @@ docker logs --tail 50 meu-app  # Mostra últimas 50 linhas
   - Lista redes Docker.
 - `docker volume ls`
   - Lista volumes Docker.
+
+### Volumes
+
+Volumes são usados para persistir dados fora do ciclo de vida de um contêiner.
+
+- `docker volume create <nome>`
+  - Cria um volume novo.
+- `docker volume ls`
+  - Lista os volumes existentes.
+- `docker volume inspect <nome>`
+  - Mostra detalhes de um volume, incluindo o ponto de montagem.
+- `docker volume rm <nome>`
+  - Remove um volume.
+- `docker volume prune`
+  - Remove volumes não utilizados.
+
+Exemplo de uso:
+
+```bash
+# Criar um volume
+docker volume create dados-app
+
+# Rodar um container usando esse volume
+docker run -d --name app -v dados-app:/data nginx
+
+# Verificar onde o volume está montado
+docker volume inspect dados-app
+```
+
+## Docker Compose
+
+O Docker Compose é usado para subir e gerenciar múltiplos contêineres a partir de um arquivo `docker-compose.yml`.
+
+- `docker compose up`
+  - Sobe os serviços definidos no arquivo `docker-compose.yml`.
+- `docker compose up -d`
+  - Sobe os serviços em segundo plano.
+- `docker compose down`
+  - Para e remove os contêineres, redes e volumes criados pelo Compose.
+- `docker compose ps`
+  - Lista os contêineres gerenciados pelo Compose.
+- `docker compose logs`
+  - Mostra os logs de todos os serviços.
+- `docker compose logs <serviço>`
+  - Mostra os logs de um serviço específico.
+- `docker compose build`
+  - Constrói ou reconstrói as imagens dos serviços.
+- `docker compose restart`
+  - Reinicia os serviços definidos no Compose.
+- `docker compose stop`
+  - Para os serviços sem removê-los.
+- `docker compose start`
+  - Inicia serviços previamente parados.
+- `docker compose exec <serviço> sh`
+  - Abre um shell dentro de um contêiner do serviço.
+
+Exemplos úteis:
+
+```bash
+# Subir tudo em background
+docker compose up -d
+
+# Ver logs
+docker compose logs -f
+
+# Reiniciar um serviço específico
+docker compose restart app
+
+# Parar tudo
+docker compose down
+```
 
 ## Limpeza
 
