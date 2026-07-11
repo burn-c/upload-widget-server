@@ -7,6 +7,11 @@ on:
       - main
   workflow_dispatch:
 
+# ✅ ADICIONAR ESTAS PERMISSÕES
+permissions:
+  id-token: write   # Necessário para OIDC
+  contents: read    # Necessário para checkout
+
 jobs:
   Build:
     name: Build
@@ -38,15 +43,24 @@ jobs:
         run: |
           pnpm install
 
-      # Define as credenciais da AWS para permitir o acesso aos serviços de container e ECR.
+      # # Define as credenciais da AWS para permitir o acesso aos serviços de container e ECR.
+      # - name: Configure AWS Credentials
+      #   id: configure-aws-credentials
+      #   uses: aws-actions/configure-aws-credentials@v6.1.0
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: ${{ vars.AWS_REGION }}
+      
+      # ✅ NOVA CONFIGURAÇÃO OIDC
       - name: Configure AWS Credentials
         id: configure-aws-credentials
-        uses: aws-actions/configure-aws-credentials@v6.1.0
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: arn:aws:iam::488182246611:role/GitHubActionsOIDCRole
+          role-session-name: GitHubActions-${{ github.run_id }}
           aws-region: ${{ vars.AWS_REGION }}
-
+      
       # Realiza o login no Amazon ECR para poder publicar a imagem.
       - name: Login to Amazon ECR
         id: login-ecr
