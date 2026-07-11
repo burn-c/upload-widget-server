@@ -120,7 +120,7 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: upload-widget-server
+          service: upload-widget-server-27a3
           cluster: default
           wait-for-service-stability: true
 
