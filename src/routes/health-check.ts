@@ -2,6 +2,9 @@ import type { FastifyInstance } from "fastify";
 
 export async function healthCheckRoute(app: FastifyInstance) {
   app.get('/health', async (request, reply) => {
-    await reply.status(200).send({ message: 'OK!' })
+    await reply.status(200).send({ 
+      status: 'healthy',
+      timestamp: new Date().toISOString() 
+    })
   })
 }
