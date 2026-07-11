@@ -1,0 +1,83 @@
+{
+    "family": "default-upload-widget-server-27a3",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "1024",
+    "memory": "2048",
+    "executionRoleArn": "arn:aws:iam::488182246611:role/service-role/ecsTaskExecutionRole",
+    "taskRoleArn": null,
+    "containerDefinitions": [
+        {
+            "name": "Main",
+            "image": "488182246611.dkr.ecr.us-east-2.amazonaws.com/burnc/upload-widget-server@sha256:0cd6aefeba36c85b3c62b5bed5e823615be598c2a3dbe287e9bd0d42eb0fcec2",
+            "cpu": 1024,
+            "memory": 2048,
+            "memoryReservation": 2048,
+            "portMappings": [
+                {
+                    "containerPort": 3333,
+                    "hostPort": 3333,
+                    "protocol": "tcp",
+                    "name": "main-3333-tcp"
+                }
+            ],
+            "essential": true,
+            "command": [],
+            "environment": [
+                {
+                    "name": "POSTGRES_USER",
+                    "value": "postgres"
+                },
+                {
+                    "name": "CLOUDFLARE_BUCKET",
+                    "value": "upload-widget-server"
+                },
+                {
+                    "name": "CLOUDFLARE_SECRET_ACCESS_KEY",
+                    "value": "a75b890febd493549b6110860dcc069013cdcac80dbaade665bca0380e9fb211"
+                },
+                {
+                    "name": "PORT",
+                    "value": "3333"
+                },
+                {
+                    "name": "CLOUDFLARE_PUBLIC_URL",
+                    "value": "https://pub-9053b805ce90427d8c5f4046e3c1f4ea.r2.dev"
+                },
+                {
+                    "name": "POSTGRES_PASSWORD",
+                    "value": "postgres"
+                },
+                {
+                    "name": "POSTGRES_PORT",
+                    "value": "5432"
+                },
+                {
+                    "name": "CLOUDFLARE_ACCESS_KEY_ID",
+                    "value": "ff120a30f59184500f3473b4dd7e086d"
+                },
+                {
+                    "name": "POSTGRES_DB",
+                    "value": "widget-server-db"
+                },
+                {
+                    "name": "CLOUDFLARE_ACCOUNT_ID",
+                    "value": "39f24742145c33b333a0b9300f1faaef"
+                }
+            ],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "secrets": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/aws/ecs/default/upload-widget-server-27a3-b66a",
+                    "awslogs-region": "us-east-2",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            }
+        }
+    ]
+}
