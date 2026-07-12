@@ -13,6 +13,7 @@ export async function healthCheckRoute(app: FastifyInstance) {
       status: 'healthy',
       apiVersion: API_VERSION,
       timestamp: new Date().toISOString(),
+      hash: 'ifmsid89famfa89sjdfj29rm390awef90ajwerq03e9r0j'
     })
   })
 }
