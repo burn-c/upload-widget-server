@@ -122,21 +122,40 @@ jobs:
           tags: |
             ${{steps.login-ecr.outputs.registry}}/${{ vars.ECR_REPOSITORY }}:${{ steps.generate-tag.outputs.sha_image_tag }}
 
-      - name: Fill in the new image ID in the Amazon ECS task definition
-        id: task-def
+      - name: Render task definition
+        id: reder-task-definition
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: task-definition.json
-          container-name: Main
-          image: ${{steps.login-ecr.outputs.registry}}/${{ vars.ECR_REPOSITORY }}:${{ steps.generate-tag.outputs.sha_image_tag }}
-  
-      - name: Deploy Amazon ECS task definition
+          task-definition: .aws/task-definition.json
+          container-name: widget-server
+          image: ${{steps.login-ecr.outputs.registry}}/${{ vars.ECR_REPOSITORY }}:${{ steps.generate-tag.outputs.sha }}
+
+      - name: Deploy Amazon ECS
+        id: deploy-amazon-ecs
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: upload-widget-server-27a3
-          cluster: default
+          task-definition: ${{ steps.reder-task-definition.outputs.task-definition }}
+          service: burndev-widget-server-service
+          cluster: burndev-ecs
           wait-for-service-stability: true
+
+## Exemplo de como atualizar o task definition da Amazon ECS para usar a nova imagem
+      # - name: Fill in the new image ID in the Amazon ECS task definition
+      #   id: task-def
+      #   uses: aws-actions/amazon-ecs-render-task-definition@v1
+      #   with:
+      #     task-definition: task-definition.json
+      #     container-name: Main
+      #     image: ${{steps.login-ecr.outputs.registry}}/${{ vars.ECR_REPOSITORY }}:${{ steps.generate-tag.outputs.sha_image_tag }}
+  
+      # - name: Deploy Amazon ECS task definition
+      #   uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+      #   with:
+      #     task-definition: ${{ steps.task-def.outputs.task-definition }}
+      #     service: upload-widget-server-27a3
+      #     cluster: default
+      #     wait-for-service-stability: true
+##. FIM ##
 
       # Exemplo alternativo de build e push manual via Docker CLI.
       # Neste bloco comentado, o comando docker build cria a imagem localmente a partir do Dockerfile,
