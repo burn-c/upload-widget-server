@@ -1,58 +1,41 @@
 name: Deploy widget-server image to AWS ECR
 
-# Workflow responsável por construir e publicar a imagem do widget-server no Amazon ECR.
 on:
   push:
     branches:
       - main
   workflow_dispatch:
 
-# ✅ ADICIONAR ESTAS PERMISSÕES
 permissions:
-  id-token: write   # Necessário para OIDC
-  contents: read    # Necessário para checkout
+  id-token: write
+  contents: read
 
 jobs:
   Build:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      # Faz o checkout do código-fonte do repositório para a execução do workflow.
       - name: Checkout
         id: checkout
         uses: actions/checkout@v4
 
-      # Configura a versão do Node.js utilizada no ambiente de execução.
       - name: Configure Node v20
         id: configure-node
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      # Instala o gerenciador de pacotes pnpm para executar os comandos do projeto.
       - name: Install pnpm
         id: install-pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 8
 
-      # Instala todas as dependências do projeto com pnpm.
-      # O comando pnpm install lê o arquivo lock e baixa os pacotes necessários para o build.
       - name: Install dependencies
         id: install-dependencies
         run: |
           pnpm install
 
-      # # Define as credenciais da AWS para permitir o acesso aos serviços de container e ECR.
-      # - name: Configure AWS Credentials
-      #   id: configure-aws-credentials
-      #   uses: aws-actions/configure-aws-credentials@v6.1.0
-      #   with:
-      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     aws-region: ${{ vars.AWS_REGION }}
-      
-      # ✅ NOVA CONFIGURAÇÃO OIDC
       - name: Configure AWS Credentials
         id: configure-aws-credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -61,29 +44,20 @@ jobs:
           role-session-name: GitHubActions-${{ github.run_id }}
           aws-region: ${{ vars.AWS_REGION }}
       
-      # Realiza o login no Amazon ECR para poder publicar a imagem.
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # Habilita o suporte ao Docker Buildx para builds mais eficientes e com cache.
       - name: Set up Docker Buildx
         id: set-up-docker-buildx
         uses: docker/setup-buildx-action@v3
 
-      # Gera uma tag curta baseada no SHA do commit para identificar a imagem publicada.
-      # O comando echo $GITHUB_SHA pega o hash do commit atual, e head -c7 pega apenas os 7 primeiros caracteres.
-      # Em seguida, a variável é enviada para o GitHub Actions via $GITHUB_OUTPUT para ser usada em outras etapas.
       - name: Generate tag
         id: generate-tag
         run: |
           SHA_IMAGE_TAG=$(echo $GITHUB_SHA | head -c7)
           echo "sha_image_tag=$SHA_IMAGE_TAG" >> $GITHUB_OUTPUT
 
-      # Constrói a imagem localmente e a carrega no ambiente para análise posterior.
-      # O parâmetro context: . indica que o Docker deve usar a pasta atual como contexto do build.
-      # O parâmetro load: true faz com que a imagem seja carregada localmente no runner após o build.
-      # O cache-from e cache-to usam o cache do GitHub Actions (type=gha) para acelerar builds futuros.
       - name: Build and export image
         uses: docker/build-push-action@v6
         with:
@@ -94,10 +68,6 @@ jobs:
           tags: |
             ${{steps.login-ecr.outputs.registry}}/${{ vars.ECR_REPOSITORY }}:test
 
-      # Executa a varredura de vulnerabilidades na imagem construída usando o Trivy.
-      # O parâmetro format: table define que o resultado será exibido em formato de tabela no log.
-      # O parâmetro ignore-unfixed: true ignora vulnerabilidades que ainda não possuem correção disponível.
-      # O parâmetro vuln-type: os,library limita a verificação a vulnerabilidades do sistema operacional e das bibliotecas.
       - name: Run Trivy scanner
         id: run-trivy-scanner
         uses: aquasecurity/trivy-action@v0.36.0
@@ -108,11 +78,7 @@ jobs:
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH,MEDIUM,LOW'
 
-      # Faz o build final da imagem e publica a versão no Amazon ECR com a tag do commit.
-      # O parâmetro context: . define o diretório base para o build da imagem.
-      # O parâmetro push: true envia a imagem para o repositório remoto do ECR.
-      # O parâmetro cache-from: type=gha reutiliza o cache do GitHub Actions para acelerar esse build.
-      - name: Build and push the image to AWS ECR with docker/build-push-action@v6
+      - name: Build and push the image to AWS ECR
         id: build-and-push-the-image-to-aws-ecr
         uses: docker/build-push-action@v6
         with:
@@ -122,64 +88,21 @@ jobs:
           tags: |
             ${{steps.login-ecr.outputs.registry}}/${{ vars.ECR_REPOSITORY }}:${{ steps.generate-tag.outputs.sha_image_tag }}
 
+      # ✅ CORRIGIDO: Nome do step e referência da tag
       - name: Render task definition
-        id: reder-task-definition
+        id: render-task-definition
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: .aws/task-definition.json
           container-name: upload-widget-server
-          image: ${{steps.login-ecr.outputs.registry}}/${{ vars.ECR_REPOSITORY }}:${{ steps.generate-tag.outputs.sha }}
+          image: ${{steps.login-ecr.outputs.registry}}/${{ vars.ECR_REPOSITORY }}:${{ steps.generate-tag.outputs.sha_image_tag }}
 
+      # ✅ CORRIGIDO: Referência do step anterior
       - name: Deploy Amazon ECS
         id: deploy-amazon-ecs
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition: ${{ steps.reder-task-definition.outputs.task-definition }}
+          task-definition: ${{ steps.render-task-definition.outputs.task-definition }}
           service: burndev-widget-server-service
           cluster: burndev-ecs
           wait-for-service-stability: true
-
-## Exemplo de como atualizar o task definition da Amazon ECS para usar a nova imagem
-      # - name: Fill in the new image ID in the Amazon ECS task definition
-      #   id: task-def
-      #   uses: aws-actions/amazon-ecs-render-task-definition@v1
-      #   with:
-      #     task-definition: task-definition.json
-      #     container-name: Main
-      #     image: ${{steps.login-ecr.outputs.registry}}/${{ vars.ECR_REPOSITORY }}:${{ steps.generate-tag.outputs.sha_image_tag }}
-  
-      # - name: Deploy Amazon ECS task definition
-      #   uses: aws-actions/amazon-ecs-deploy-task-definition@v2
-      #   with:
-      #     task-definition: ${{ steps.task-def.outputs.task-definition }}
-      #     service: upload-widget-server-27a3
-      #     cluster: default
-      #     wait-for-service-stability: true
-##. FIM ##
-
-      # Exemplo alternativo de build e push manual via Docker CLI.
-      # Neste bloco comentado, o comando docker build cria a imagem localmente a partir do Dockerfile,
-      # e o comando docker push envia essa imagem para o repositório do ECR.
-      # - name: Build and push image to Amazon ECR
-      #   id: build-push-image
-      #   env:
-      #     SHA_IMAGE_TAG: ${{ steps.generate-tag.outputs.sha_image_tag }}
-      #     ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
-      #     ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
-      #   run: |
-      #     PUSH_IMAGE_URL="${ECR_REGISTRY}/${ECR_REPOSITORY}:${SHA_IMAGE_TAG}"
-      #     echo "Building image with tag: $PUSH_IMAGE_URL"
-      #     docker build -t "$PUSH_IMAGE_URL" .
-      #     docker push "$PUSH_IMAGE_URL"
-
-      # - name: Deploy to App Runner
-      #   id: deploy-to-app-Runner
-      #   uses: awslabs/amazon-app-runner-deploy@main
-      #   with:
-      #     service: upload-widget-server
-      #     image: ${{steps.login-ecr.outputs.registry}}/${{ vars.ECR_REPOSITORY }}:${{ steps.generate-tag.outputs.sha }}
-      #     region: ${{ vars.AWS_REGION }}
-      #     access-role-arn: ''
-      #     cpu: 1
-      #     memory: 2
-      #     port: ${{ vars.PORT }}
