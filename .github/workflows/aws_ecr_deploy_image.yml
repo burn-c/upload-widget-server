@@ -10,6 +10,12 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  ECS_SERVICE: burndev-widget-server-service
+  ECS_CLUSTER: burndev-ecs
+  CONTAINER_NAME: upload-widget-server
+  ECS_TASK_DEFINITION: .aws/task-definition.json
+
 jobs:
   Build:
     name: Build
@@ -93,7 +99,7 @@ jobs:
         id: render-task-definition
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: .aws/task-definition.json
+          task-definition: ${{ env.ECS_TASK_DEFINITION }}
           container-name: upload-widget-server
           image: ${{steps.login-ecr.outputs.registry}}/${{ vars.ECR_REPOSITORY }}:${{ steps.generate-tag.outputs.sha_image_tag }}
 
@@ -103,6 +109,6 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           task-definition: ${{ steps.render-task-definition.outputs.task-definition }}
-          service: burndev-widget-server-service
-          cluster: burndev-ecs
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
