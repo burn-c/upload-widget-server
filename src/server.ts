@@ -1,3 +1,6 @@
+// Deve ser o primeiro import: registra a instrumentação antes do resto da app.
+import './otel'
+
 import { fastify } from 'fastify'
 import { fastifyCors } from '@fastify/cors'
 import { uploadImageRoute } from './routes/upload-image'
