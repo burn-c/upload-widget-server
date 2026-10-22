@@ -41,7 +41,8 @@ EXPOSE 3333
 # OpenTelemetry: a instrumentação é registrada por src/otel.ts (compilado em dist).
 # A configuração não-secreta fica aqui; o token (OTEL_EXPORTER_OTLP_HEADERS)
 # deve vir de secret (ECS/Secrets Manager), nunca da imagem.
-ENV OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf" \
+ENV NODE_ENV="production" \
+    OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf" \
     OTEL_EXPORTER_OTLP_ENDPOINT="https://otlp-gateway-prod-sa-east-1.grafana.net/otlp" \
     OTEL_TRACES_EXPORTER="otlp" \
     OTEL_METRICS_EXPORTER="otlp" \
