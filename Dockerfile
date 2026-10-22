@@ -1,5 +1,5 @@
 # CREATE_IMAGE_01: Create "base" image with Node.js and pnpm installed
-FROM node:20.18 AS base
+FROM node:24.18 AS base
 ENV CI=true
 
 RUN npm i -g pnpm
@@ -37,5 +37,16 @@ COPY --from=build /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/package.json ./package.json
 
 EXPOSE 3333
+
+# OpenTelemetry: a instrumentação é registrada por src/otel.ts (compilado em dist).
+# A configuração não-secreta fica aqui; o token (OTEL_EXPORTER_OTLP_HEADERS)
+# deve vir de secret (ECS/Secrets Manager), nunca da imagem.
+ENV OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf" \
+    OTEL_EXPORTER_OTLP_ENDPOINT="https://otlp-gateway-prod-sa-east-1.grafana.net/otlp" \
+    OTEL_TRACES_EXPORTER="otlp" \
+    OTEL_METRICS_EXPORTER="otlp" \
+    OTEL_LOGS_EXPORTER="otlp" \
+    OTEL_RESOURCE_ATTRIBUTES="service.name=upload-widget-server,deployment.environment=production" \
+    OTEL_LOG_LEVEL="info"
 
 CMD ["dist/server.mjs"]
